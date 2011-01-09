@@ -1,0 +1,15 @@
+bin/
+Bin/
+*.dll
+*.pdb
+*.user
+*.cache
+*.suo
+*.docstates
+obj/
+_ReSharper.*
+dist/
+pkg/*/
+*.nupkg
+PrecompiledWeb
+packages/
