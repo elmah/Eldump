@@ -39,32 +39,19 @@ type Arg =
     | Flag of string
     | Atom of string
 
-module Args =
-    let rec atoms args =
-        match args with
-        | Atom(a) :: args -> a :: (atoms args)
-        | _ :: args -> atoms args
-        | [] -> []
-    let rec named args =
-        match args with
-        | Named(n, v) :: args -> (n, v) :: (named args)
-        | _ :: args -> named args
-        | [] -> []
-    let rec flagged args =
-        match args with
-        | Flag(n) :: args -> n :: (flagged args)
-        | _ :: args -> flagged args
-        | [] -> []
-
 let parse_options lax (names, flags) args =
     // Taken from LitS3:
     //   http://lits3.googlecode.com/svn-history/r109/trunk/LitS3.Commander/s3cmd.py
     // Copyright (c) 2008, Nick Farina
     // Author: Atif Aziz, http://www.raboof.com/
-    let required = names |> Seq.filter (fun (name : string) -> name.Slice(-1) = "!") 
-                         |> Seq.map (fun name -> name.Slice(0, new Nullable<int>(-1)))
-    let all = names |> Seq.map (fun n -> n.TrimEnd("!".ToCharArray()), ArgKind.Named)
-                    |> Seq.append(flags |> Seq.map(fun n -> n, ArgKind.Flag))
+    let required = 
+        names |> Seq.filter (fun (name : string) -> name.Slice(-1) = "!") 
+              |> Seq.map (fun name -> name.Slice(0, new Nullable<int>(-1)))
+              |> List.ofSeq
+    let all = 
+        names |> Seq.map (fun n -> n.TrimEnd([|'!'|]), ArgKind.Named)
+              |> Seq.append(flags |> Seq.map(fun n -> n, ArgKind.Flag))
+              |> List.ofSeq
     let rec parse args =
         match args with
         | [] ->
@@ -90,14 +77,13 @@ let parse_options lax (names, flags) args =
         | arg :: args ->
             Atom(arg) :: parse args
     let args = parse args
-    let nargs = args |> Seq.choose (function
-                        | Named(n, _) -> Some(n)
-                        | _ -> None) |> Set.ofSeq
-    match required |> Seq.tryFind (fun arg -> not (nargs |> Set.contains arg)) with
+    let nargs, fargs, args = 
+        args |> Seq.choose (function | Named(n, v) -> Some(n, v) | _ -> None) |> Map.ofSeq,
+        args |> Seq.choose (function | Flag(n)     -> Some(n)    | _ -> None) |> Set.ofSeq, 
+        args |> Seq.choose (function | Atom(a)     -> Some(a)    | _ -> None) |> List.ofSeq
+    match required |> Seq.tryFind (fun arg -> not (nargs.ContainsKey(arg))) with
     | Some(arg) -> failwith (sprintf "Missing required argument: %s" arg)
-    | None -> args |> Args.named   |> Map.ofSeq, 
-              args |> Args.flagged |> Set.ofSeq, 
-              args |> Args.atoms
+    | None -> nargs, fargs, args
 
 let lax_parse_options = 
     parse_options false
