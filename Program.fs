@@ -23,6 +23,7 @@ open System
 open System.Diagnostics
 open System.Net
 open System.IO
+open System.Text
 open System.Text.RegularExpressions
 open HtmlAgilityPack
 open Fizzler
@@ -134,13 +135,14 @@ let mapRecords (columns : string list) records =
 let mapRecords2 col1 col2 f records =
     mapRecords [col1; col2] records |> Seq.map (fun fs -> f fs.[0] fs.[1])
 
-let downloadText (url : Uri) =
+let downloadText (url : Uri) = async {
     use wc = new WebClient()
-    wc.DownloadStringUsingResponseEncoding(url)
+    return! wc.AsyncDownloadString(url)
+}
 
 let downloadErrorsIndex (url : Uri) =
     let url = if url.IsFile then url else new Uri(url.ToString() + "/download")
-    let log = downloadText url
+    let log = downloadText url |> Async.RunSynchronously
     let selector url xmlref = 
         let url = new Uri(url |> Option.get, UriKind.Absolute)
         let xmlref = xmlref |> Option.map (fun v -> new Uri(v, UriKind.Absolute))
@@ -149,24 +151,26 @@ let downloadErrorsIndex (url : Uri) =
         |> mapRecords2 "URL" "XMLREF?" selector
         |> List.ofSeq
 
-let resolveErrorXmlRef url xmlref =
+let resolveErrorXmlRef url xmlref = async {
     match xmlref with
-    | Some(url) -> url
+    | Some(url) -> return url
     | None ->
-        let html = downloadText url
+        let! html = downloadText url
         let doc = new HtmlDocument()
         doc.LoadHtml(html)
         let node = doc.DocumentNode.QuerySelector("a[rel=alternate][type*=xml]")
         if node = null then
-            failwith (sprintf "XML data for not found for [%s]." (url.ToString()))
+            return failwith (sprintf "XML data for not found for [%s]." (url.ToString()))
         else
             let href = new Uri(node.Attributes.["href"].Value, UriKind.RelativeOrAbsolute)
-            new Uri(url, href)
+            return new Uri(url, href)
+}
 
-let downloadError url xmlref =
-    let xmlref = resolveErrorXmlRef url xmlref
-    let xml = downloadText xmlref
-    xmlref, ErrorXml.DecodeString(xml), xml
+let downloadError url xmlref = async {
+    let! xmlref = resolveErrorXmlRef url xmlref
+    let! xml = downloadText xmlref
+    return xmlref, ErrorXml.DecodeString(xml), xml
+}
 
 let slugize url =
     Regex.Replace(Regex.Replace(url, @"[^A-Za-z0-9\-]", "-"), "-{2,}", "-")
@@ -204,7 +208,8 @@ let run args =
         let homeUrl = new Uri(arg)
         let urls = downloadErrorsIndex(homeUrl)
         let errors = seq { for url, xmlref in urls -> downloadError url xmlref }
-        
+        let errors = errors |> Async.Parallel |> Async.RunSynchronously
+
         let title = Console.Title
         try
             
