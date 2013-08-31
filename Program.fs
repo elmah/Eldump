@@ -30,32 +30,6 @@ open Fizzler.Systems.HtmlAgilityPack
 open Elmah
 open Mannex.Net
 
-(*
-type String with
-    member self.Slice(start) =
-        self.Slice(start, self.Length)
-    member self.Slice(start, stop) =
-        let rec slice (str : string) start stop =
-            let length = str.Length
-            if start < 0 then
-                let start = length + start
-                slice str (if start < 0 then 0 else start) stop
-            elif start > length then
-                slice str length stop
-            elif stop < 0 then
-                let stop = length + stop
-                slice str start (if stop < 0 then 0 else stop)
-            elif stop > length then
-                slice str start length
-            else
-                let slength = stop - start
-                if slength > 0 then
-                    str.Substring(start, slength)
-                else
-                    String.Empty
-        slice self start stop    
-*)
-
 let sliceClip len index =
     match index with
     | _ when index < 0 -> 
