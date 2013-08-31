@@ -192,19 +192,24 @@ module Options =
     let OUTPUT_DIR = "output-dir"
     [<Literal>] 
     let SILENT = "silent"
+    [<Literal>] 
+    let TRACE = "trace"
 
 [<EntryPoint>]
 let main args =
     try
         
         let named_options = [Options.OUTPUT_DIR]
-        let bool_options = [Options.SILENT]
+        let bool_options = [Options.SILENT; Options.TRACE]
         
         let nargs, flags, args = 
             args |> List.ofArray 
                  |> lax_parse_options (named_options, bool_options)
 
         let verbose = not (flags.Contains Options.SILENT)
+
+        if (flags.Contains Options.TRACE) then 
+            Trace.Listeners.Add(new ConsoleTraceListener(true)) |> ignore
 
         let outdir = defaultArg (nargs.TryFind Options.OUTPUT_DIR) "."
         Directory.CreateDirectory(outdir) |> ignore
@@ -234,6 +239,6 @@ let main args =
         0
     with
     | e -> 
-        Console.Error.WriteLine(e.Message)
+        eprintfn "%s" (e.GetBaseException().Message)
         Trace.TraceError(e.ToString())
         1
