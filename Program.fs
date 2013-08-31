@@ -25,6 +25,7 @@ open System.Net
 open System.IO
 open System.Text
 open System.Text.RegularExpressions
+open System.Threading
 open HtmlAgilityPack
 open Fizzler
 open Fizzler.Systems.HtmlAgilityPack
@@ -183,6 +184,10 @@ module Options =
     [<Literal>] 
     let TRACE = "trace"
 
+type DownloadResult =
+| NewDownload of (Uri * Error * string * string)
+| PreDownloaded of (Uri * string)
+
 let run args =
     
     let namedOptions = [Options.OUTPUT_DIR]
@@ -204,32 +209,48 @@ let run args =
     | [] ->
         failwith "Missing ELMAH index URL (e.g. http://www.example.com/elmah.axd)."
     | arg :: _ -> 
-        
+
         let homeUrl = new Uri(arg)
         let urls = downloadErrorsIndex(homeUrl)
-        let errors = seq { for url, xmlref in urls -> downloadError url xmlref }
-        let errors = errors |> Async.Parallel |> Async.RunSynchronously
 
         let title = Console.Title
         try
+
+            let counter = ref 0
+            let tick() =
+                Interlocked.Increment(&counter.contents) |> ignore
+                String.Format("Error {0:N0} of {1:N0}", !counter, urls.Length)
             
-            let mutable counter = 0
-            
-            for url, error, xml in errors do
-                
-                counter <- counter + 1
-                let status = String.Format("Error {0:N0} of {1:N0}", counter, urls.Length)
-                Console.Title <- status
-                
-                if verbose then
-                    printfn "%s" (url.ToString())
-                    printfn "%s: %s" status (error.Type)
-                    printfn "%s\n" (error.Message)                        
-                
-                
-                let fname = "error-" + (slugize (url.AbsoluteUri)) + ".xml"
-                File.WriteAllText(Path.Combine(outdir, fname), xml)
-        
+            seq {
+
+                for url, xmlref in urls -> async {
+
+                    let fname = "error-" + (slugize (url.AbsoluteUri)) + ".xml"
+                    let path = Path.Combine(outdir, fname)
+
+                    let! status = async {
+                        if File.Exists(path) then
+                            if verbose then Console.WriteLine((sprintf "%s SKIPPED" (url.ToString())))
+                            return tick()
+                        else
+                            let! url, error, xml = downloadError url xmlref
+                            let status = tick()
+                            if verbose then
+                                let lines = [|
+                                    sprintf "%s" (url.ToString());
+                                    sprintf "%s: %s" status (error.Type);
+                                    sprintf "%s\n" (error.Message);
+                                |]
+                                Console.WriteLine(String.Join(Environment.NewLine, lines))
+                            File.WriteAllText(path, xml)
+                            return status
+                    }
+
+                    Console.Title <- status
+                }
+            }
+            |> Async.Parallel |> Async.RunSynchronously |> ignore
+
         finally
             Console.Title <- title
 
