@@ -134,16 +134,13 @@ let mapRecords (columns : string list) records =
 let mapRecords2 col1 col2 f records =
     mapRecords [col1; col2] records |> Seq.map (fun fs -> f fs.[0] fs.[1])
 
-let downloadText wc (url : Uri) =
-    let wc = 
-        match wc with
-        | Some(wc) -> wc
-        | None -> new WebClient()
+let downloadText (url : Uri) =
+    use wc = new WebClient()
     wc.DownloadStringUsingResponseEncoding(url)
 
 let downloadErrorsIndex (url : Uri) =
     let url = if url.IsFile then url else new Uri(url.ToString() + "/download")
-    let log = downloadText None url
+    let log = downloadText url
     let selector url xmlref = 
         let url = new Uri(url |> Option.get, UriKind.Absolute)
         let xmlref = xmlref |> Option.map (fun v -> new Uri(v, UriKind.Absolute))
@@ -156,7 +153,7 @@ let resolveErrorXmlRef url xmlref =
     match xmlref with
     | Some(url) -> url
     | None ->
-        let html = downloadText None url
+        let html = downloadText url
         let doc = new HtmlDocument()
         doc.LoadHtml(html)
         let node = doc.DocumentNode.QuerySelector("a[rel=alternate][type*=xml]")
@@ -168,7 +165,7 @@ let resolveErrorXmlRef url xmlref =
 
 let downloadError url xmlref =
     let xmlref = resolveErrorXmlRef url xmlref
-    let xml = downloadText None xmlref
+    let xml = downloadText xmlref
     xmlref, ErrorXml.DecodeString(xml), xml
 
 let slugize url =
