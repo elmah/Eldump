@@ -39,7 +39,7 @@ type Arg =
     | Flag of string
     | Atom of string
 
-let parse_options lax (names, flags) args =
+let parseOptions lax (names, flags) args =
     // Taken from LitS3:
     //   http://lits3.googlecode.com/svn-history/r109/trunk/LitS3.Commander/s3cmd.py
     // Copyright (c) 2008, Nick Farina
@@ -85,27 +85,28 @@ let parse_options lax (names, flags) args =
     | Some(arg) -> failwith (sprintf "Missing required argument: %s" arg)
     | None -> nargs, fargs, args
 
-let lax_parse_options = 
-    parse_options false
+let laxParseOptions = 
+    parseOptions false
 
-let parse_csv (reader : TextReader) =
-    seq {
-        use parser = new Microsoft.VisualBasic.FileIO.TextFieldParser(reader)
-        parser.Delimiters <- [|","|]
-        while not parser.EndOfData do
-            yield parser.ReadFields()
-    }
+module CSV =
+    let parse (reader : TextReader) =
+        seq {
+            use parser = new Microsoft.VisualBasic.FileIO.TextFieldParser(reader)
+            parser.Delimiters <- [|","|]
+            while not parser.EndOfData do
+                yield parser.ReadFields()
+        }
 
-let parse_csv_file (path : string) =
-    seq {
-        use reader = new StreamReader(path)
-        yield! parse_csv reader
-    }
+    let parseFile (path : string) =
+        seq {
+            use reader = new StreamReader(path)
+            yield! parse reader
+        }
 
-let parse_csv_str text =
-    parse_csv (new StringReader(text))
+    let parseString text =
+        parse (new StringReader(text))
 
-let map_records (columns : string list) records =
+let mapRecords (columns : string list) records =
     // COLUMN  = required
     // COLUMN? = optional
     let columns = 
@@ -130,32 +131,32 @@ let map_records (columns : string list) records =
         yield! records |> Seq.skip 1 |> binder bindings
     }
 
-let map_records_2 col1 col2 f records =
-    map_records [col1; col2] records |> Seq.map (fun fs -> f fs.[0] fs.[1])
+let mapRecords2 col1 col2 f records =
+    mapRecords [col1; col2] records |> Seq.map (fun fs -> f fs.[0] fs.[1])
 
-let download_text wc (url : Uri) =
+let downloadText wc (url : Uri) =
     let wc = 
         match wc with
         | Some(wc) -> wc
         | None -> new WebClient()
     wc.DownloadStringUsingResponseEncoding(url)
 
-let download_errors_index (url : Uri) =
+let downloadErrorsIndex (url : Uri) =
     let url = if url.IsFile then url else new Uri(url.ToString() + "/download")
-    let log = download_text None url
+    let log = downloadText None url
     let selector url xmlref = 
         let url = new Uri(url |> Option.get, UriKind.Absolute)
         let xmlref = xmlref |> Option.map (fun v -> new Uri(v, UriKind.Absolute))
         url, xmlref
-    log |> parse_csv_str 
-        |> map_records_2 "URL" "XMLREF?" selector
+    log |> CSV.parseString 
+        |> mapRecords2 "URL" "XMLREF?" selector
         |> List.ofSeq
 
-let resolve_error_xmlref url xmlref =
+let resolveErrorXmlRef url xmlref =
     match xmlref with
     | Some(url) -> url
     | None ->
-        let html = download_text None url
+        let html = downloadText None url
         let doc = new HtmlDocument()
         doc.LoadHtml(html)
         let node = HtmlNodeSelection.QuerySelector(doc.DocumentNode, "a[rel=alternate][type*=xml]")
@@ -165,12 +166,12 @@ let resolve_error_xmlref url xmlref =
             let href = new Uri(node.Attributes.["href"].Value, UriKind.RelativeOrAbsolute)
             new Uri(url, href)
 
-let download_error url xmlref =
-    let xmlref = resolve_error_xmlref url xmlref
-    let xml = download_text None xmlref
+let downloadError url xmlref =
+    let xmlref = resolveErrorXmlRef url xmlref
+    let xml = downloadText None xmlref
     xmlref, ErrorXml.DecodeString(xml), xml
 
-let tidy_fname url =
+let slugize url =
     Regex.Replace(Regex.Replace(url, @"[^A-Za-z0-9\-]", "-"), "-{2,}", "-")
 
 module Options =
@@ -185,12 +186,12 @@ module Options =
 let main args =
     try
         
-        let named_options = [Options.OUTPUT_DIR]
-        let bool_options = [Options.SILENT; Options.TRACE]
+        let namedOptions = [Options.OUTPUT_DIR]
+        let boolOptions = [Options.SILENT; Options.TRACE]
         
         let nargs, flags, args = 
             args |> List.ofArray 
-                 |> lax_parse_options (named_options, bool_options)
+                 |> laxParseOptions (namedOptions, boolOptions)
 
         let verbose = not (flags.Contains Options.SILENT)
 
@@ -204,9 +205,9 @@ let main args =
         | [] ->
             failwith "Missing ELMAH index URL (e.g. http://www.example.com/elmah.axd)."
         | arg :: _ -> 
-            let home_url = new Uri(arg)
-            let urls = download_errors_index(home_url)
-            let errors = seq { for url, xmlref in urls -> download_error url xmlref }
+            let homeUrl = new Uri(arg)
+            let urls = downloadErrorsIndex(homeUrl)
+            let errors = seq { for url, xmlref in urls -> downloadError url xmlref }
             let title = Console.Title
             try
                 let mutable counter = 0
@@ -218,7 +219,7 @@ let main args =
                         printfn "%s" (url.ToString())
                         printfn "%s: %s" status (error.Type)
                         printfn "%s\n" (error.Message)                        
-                    let fname = "error-" + (tidy_fname (url.AbsoluteUri)) + ".xml"
+                    let fname = "error-" + (slugize (url.AbsoluteUri)) + ".xml"
                     File.WriteAllText(Path.Combine(outdir, fname), xml)
             finally
                 Console.Title <- title
