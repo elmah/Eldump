@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Elmah.Export", "Elmah.Export.fsproj", "{706FAA3C-E24B-479E-A047-D6000E99F899}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Eldump", "Eldump.fsproj", "{706FAA3C-E24B-479E-A047-D6000E99F899}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{718E331B-6B7C-46EB-B9FA-03149CE4A7F4}"
 	ProjectSection(SolutionItems) = preProject

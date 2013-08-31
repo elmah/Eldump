@@ -8,7 +8,7 @@
     <ProjectGuid>706faa3c-e24b-479e-a047-d6000e99f899</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>Elmah.Export</RootNamespace>
-    <AssemblyName>elmahexp</AssemblyName>
+    <AssemblyName>eldumpl</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <Name>Elmah.Export</Name>
     <TargetFrameworkProfile />

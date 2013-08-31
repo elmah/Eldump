@@ -1,6 +1,5 @@
-﻿//
-// ELMAH Sandbox
-// Copyright (c) 2010-11 Atif Aziz. All rights reserved.
+// ELMAH Error Log Dump Utility
+// Copyright (c) 2010 Atif Aziz. All rights reserved.
 //
 //  Author(s):
 //
@@ -17,7 +16,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 open System
 open System.Diagnostics
