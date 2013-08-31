@@ -182,47 +182,59 @@ module Options =
     [<Literal>] 
     let TRACE = "trace"
 
+let run args =
+    
+    let namedOptions = [Options.OUTPUT_DIR]
+    let boolOptions = [Options.SILENT; Options.TRACE]
+        
+    let nargs, flags, args = 
+        args |> List.ofArray 
+             |> laxParseOptions (namedOptions, boolOptions)
+
+    let verbose = not (flags.Contains Options.SILENT)
+
+    if (flags.Contains Options.TRACE) then 
+        Trace.Listeners.Add(new ConsoleTraceListener(true)) |> ignore
+
+    let outdir = defaultArg (nargs.TryFind Options.OUTPUT_DIR) "."
+    Directory.CreateDirectory(outdir) |> ignore
+
+    match args with
+    | [] ->
+        failwith "Missing ELMAH index URL (e.g. http://www.example.com/elmah.axd)."
+    | arg :: _ -> 
+        
+        let homeUrl = new Uri(arg)
+        let urls = downloadErrorsIndex(homeUrl)
+        let errors = seq { for url, xmlref in urls -> downloadError url xmlref }
+        
+        let title = Console.Title
+        try
+            
+            let mutable counter = 0
+            
+            for url, error, xml in errors do
+                
+                counter <- counter + 1
+                let status = String.Format("Error {0:N0} of {1:N0}", counter, urls.Length)
+                Console.Title <- status
+                
+                if verbose then
+                    printfn "%s" (url.ToString())
+                    printfn "%s: %s" status (error.Type)
+                    printfn "%s\n" (error.Message)                        
+                
+                
+                let fname = "error-" + (slugize (url.AbsoluteUri)) + ".xml"
+                File.WriteAllText(Path.Combine(outdir, fname), xml)
+        
+        finally
+            Console.Title <- title
+
 [<EntryPoint>]
 let main args =
     try
-        
-        let namedOptions = [Options.OUTPUT_DIR]
-        let boolOptions = [Options.SILENT; Options.TRACE]
-        
-        let nargs, flags, args = 
-            args |> List.ofArray 
-                 |> laxParseOptions (namedOptions, boolOptions)
-
-        let verbose = not (flags.Contains Options.SILENT)
-
-        if (flags.Contains Options.TRACE) then 
-            Trace.Listeners.Add(new ConsoleTraceListener(true)) |> ignore
-
-        let outdir = defaultArg (nargs.TryFind Options.OUTPUT_DIR) "."
-        Directory.CreateDirectory(outdir) |> ignore
-
-        match args with
-        | [] ->
-            failwith "Missing ELMAH index URL (e.g. http://www.example.com/elmah.axd)."
-        | arg :: _ -> 
-            let homeUrl = new Uri(arg)
-            let urls = downloadErrorsIndex(homeUrl)
-            let errors = seq { for url, xmlref in urls -> downloadError url xmlref }
-            let title = Console.Title
-            try
-                let mutable counter = 0
-                for url, error, xml in errors do
-                    counter <- counter + 1
-                    let status = String.Format("Error {0:N0} of {1:N0}", counter, urls.Length)
-                    Console.Title <- status
-                    if verbose then
-                        printfn "%s" (url.ToString())
-                        printfn "%s: %s" status (error.Type)
-                        printfn "%s\n" (error.Message)                        
-                    let fname = "error-" + (slugize (url.AbsoluteUri)) + ".xml"
-                    File.WriteAllText(Path.Combine(outdir, fname), xml)
-            finally
-                Console.Title <- title
+        run args        
         0
     with
     | e -> 
