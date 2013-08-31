@@ -28,33 +28,8 @@ open HtmlAgilityPack
 open Fizzler
 open Fizzler.Systems.HtmlAgilityPack
 open Elmah
+open Mannex
 open Mannex.Net
-
-let sliceClip len index =
-    match index with
-    | _ when index < 0 -> 
-        let index = len + index
-        if index < 0 then 0 else index
-    | _ when index > len -> len
-    | _ -> index
-
-let rec slice (str : string) start stop =
-    match str with
-    | null -> raise (ArgumentNullException("str"))
-    | _    -> 
-        match stop with
-        | None -> slice str start (Some(str.Length))
-        | Some(stop) ->
-            let clipper = sliceClip str.Length
-            let start, stop = clipper start, clipper stop
-            let len = stop - start
-            if len > 0 then str.Substring(start, len) else String.Empty
-
-type String with
-    member self.Slice(start) =
-        slice self start None
-    member self.Slice(start, stop) =
-        slice self start (Some(stop))
 
 type ArgKind =
     | Named
@@ -87,7 +62,7 @@ let parse_options lax (names, flags) args =
     // Copyright (c) 2008, Nick Farina
     // Author: Atif Aziz, http://www.raboof.com/
     let required = names |> Seq.filter (fun (name : string) -> name.Slice(-1) = "!") 
-                         |> Seq.map (fun name -> name.Slice(0, -1))
+                         |> Seq.map (fun name -> name.Slice(0, new Nullable<int>(-1)))
     let all = names |> Seq.map (fun n -> n.TrimEnd("!".ToCharArray()), ArgKind.Named)
                     |> Seq.append(flags |> Seq.map(fun n -> n, ArgKind.Flag))
     let rec parse args =
