@@ -159,7 +159,7 @@ let resolveErrorXmlRef url xmlref =
         let html = downloadText None url
         let doc = new HtmlDocument()
         doc.LoadHtml(html)
-        let node = HtmlNodeSelection.QuerySelector(doc.DocumentNode, "a[rel=alternate][type*=xml]")
+        let node = doc.DocumentNode.QuerySelector("a[rel=alternate][type*=xml]")
         if node = null then
             failwith (sprintf "XML data for not found for [%s]." (url.ToString()))
         else
