@@ -182,10 +182,6 @@ module Options =
     [<Literal>] 
     let TRACE = "trace"
 
-type DownloadResult =
-| NewDownload of (Uri * Error * string * string)
-| PreDownloaded of (Uri * string)
-
 let run args =
     
     let namedOptions = [Options.OUTPUT_DIR]
