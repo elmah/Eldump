@@ -29,7 +29,6 @@ open Fizzler
 open Fizzler.Systems.HtmlAgilityPack
 open Elmah
 open Mannex
-open Mannex.Net
 
 type ArgKind =
     | Named
