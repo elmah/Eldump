@@ -21,6 +21,7 @@ open System
 open System.Diagnostics
 open System.Net
 open System.IO
+open System.Reflection
 open System.Text
 open System.Text.RegularExpressions
 open System.Threading
@@ -29,6 +30,10 @@ open Fizzler
 open Fizzler.Systems.HtmlAgilityPack
 open Elmah
 open Mannex
+
+[<assembly:AssemblyVersion("1.0.0.0")>]
+[<assembly:AssemblyFileVersion("1.0.16402.2040")>]
+do()
 
 type ArgKind =
     | Named
@@ -133,8 +138,16 @@ let mapRecords (columns : string list) records =
 let mapRecords2 col1 col2 f records =
     mapRecords [col1; col2] records |> Seq.map (fun fs -> f fs.[0] fs.[1])
 
+let userAgentString = 
+    let asm = Reflection.Assembly.GetExecutingAssembly()
+    let path = Uri(asm.CodeBase).LocalPath
+    let filename = Path.GetFileNameWithoutExtension(path)
+    let version = asm.GetName().Version
+    sprintf "%s/%d.%d" filename version.Major version.Minor
+
 let downloadText (url : Uri) = async {
     use wc = new WebClient()
+    wc.Headers.Add(HttpRequestHeader.UserAgent, userAgentString)
     return! wc.AsyncDownloadString(url)
 }
 
