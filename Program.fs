@@ -201,7 +201,7 @@ let run args =
         Trace.Listeners.Add(new ConsoleTraceListener(true)) |> ignore
 
     let outdir = defaultArg (nargs.TryFind Options.OUTPUT_DIR) "."
-    Directory.CreateDirectory(outdir) |> ignore
+    if not (Directory.Exists(outdir)) then Directory.CreateDirectory(outdir) |> ignore
 
     match args with
     | [] ->
