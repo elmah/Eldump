@@ -193,11 +193,14 @@ module Options =
     let SILENT = "silent"
     [<Literal>] 
     let TRACE = "trace"
+    [<Literal>] 
+    let HTTP_PROXY_MY_CREDS = "http-proxy-my-creds"
 
 let run args =
-    
+
     let namedOptions = [Options.OUTPUT_DIR]
-    let boolOptions = [Options.SILENT; Options.TRACE]
+    let boolOptions  = [Options.SILENT; Options.TRACE; 
+                        Options.HTTP_PROXY_MY_CREDS]
         
     let nargs, flags, args = 
         args |> List.ofArray 
@@ -210,6 +213,9 @@ let run args =
 
     let outdir = defaultArg (nargs.TryFind Options.OUTPUT_DIR) "."
     if not (Directory.Exists(outdir)) then Directory.CreateDirectory(outdir) |> ignore
+
+    if (flags.Contains Options.HTTP_PROXY_MY_CREDS) then
+        WebRequest.DefaultWebProxy.Credentials <- CredentialCache.DefaultCredentials
 
     match args with
     | [] ->
