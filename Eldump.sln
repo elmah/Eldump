@@ -1,8 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Eldump", "Eldump.fsproj", "{706FAA3C-E24B-479E-A047-D6000E99F899}"
-EndProject
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{718E331B-6B7C-46EB-B9FA-03149CE4A7F4}"
 	ProjectSection(SolutionItems) = preProject
 		build.cmd = build.cmd
@@ -10,6 +10,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		prestore.cmd = prestore.cmd
 		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Eldump", "Eldump.fsproj", "{706FAA3C-E24B-479E-A047-D6000E99F899}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
