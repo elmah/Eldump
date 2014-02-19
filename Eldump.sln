@@ -11,7 +11,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Eldump", "Eldump.fsproj", "{706FAA3C-E24B-479E-A047-D6000E99F899}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Eldump", "src\Client\Eldump.fsproj", "{706FAA3C-E24B-479E-A047-D6000E99F899}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eldump.AspNet", "src\Server\Eldump.AspNet.csproj", "{A7F79549-5BB0-46A2-9E72-F93CBD30F67F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,6 +25,10 @@ Global
 		{706FAA3C-E24B-479E-A047-D6000E99F899}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{706FAA3C-E24B-479E-A047-D6000E99F899}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{706FAA3C-E24B-479E-A047-D6000E99F899}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7F79549-5BB0-46A2-9E72-F93CBD30F67F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7F79549-5BB0-46A2-9E72-F93CBD30F67F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7F79549-5BB0-46A2-9E72-F93CBD30F67F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7F79549-5BB0-46A2-9E72-F93CBD30F67F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
