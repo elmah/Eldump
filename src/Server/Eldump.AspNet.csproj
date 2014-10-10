@@ -38,15 +38,21 @@
       <HintPath>..\..\packages\elmah.corelibrary.1.2.2\lib\Elmah.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.Web" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DelegatingDisposable.cs" />
     <Compile Include="ErrorLogArchiveHandler.cs" />
     <Compile Include="ErrorLogExtensions.cs" />
+    <Compile Include="EventingExtensions.cs" />
+    <Compile Include="HandlerModule.cs" />
+    <Compile Include="HttpApplicationExtensions.cs" />
     <Compile Include="PositionTrackingOutputStream.cs" />
     <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="PreApplicationStart.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -25,6 +25,7 @@ namespace Eldump.AspNet
     using System.Collections.Generic;
     using System.IO;
     using System.IO.Compression;
+    using System.Linq;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -35,6 +36,28 @@ namespace Eldump.AspNet
 
     public sealed class ErrorLogArchiveHandler : HttpTaskAsyncHandler
     {
+        public static readonly Func<HttpContextBase, bool> DefaultRequestPredicate = context =>
+            context.Request.IsAuthenticated
+            && context.Request.Path.Split('/').Any(s => "eldump" == s || "eldump.axd" == s);
+
+        static Func<HttpContextBase, bool> _requestPredicate;
+
+        public static Func<HttpContextBase, bool> RequestPredicate
+        {
+            get { return _requestPredicate ?? DefaultRequestPredicate; }
+            set
+            {
+                if (value == null) throw new ArgumentNullException("value");
+                _requestPredicate = value;
+            }
+        }
+
+        [HandlerFactoryMethod] // ReSharper disable once UnusedMember.Local
+        static IHttpHandler OnRequest(HttpContextBase context)
+        {
+            return RequestPredicate(context) ? new ErrorLogArchiveHandler() : null;
+        }
+
         public override Task ProcessRequestAsync(HttpContext context)
         {
             var log = ErrorLog.GetDefault(context);
