@@ -69,6 +69,15 @@ namespace Eldump.AspNet
             if (context == null) throw new ArgumentNullException("context");
             if (log == null) throw new ArgumentNullException("log");
 
+            // TODO By default show a web page where user can parameterize the archival
+            //      ...the web page should have FORM using GET method
+            // TODO Allow user to set the download file name
+            // TODO Allow user to specify download file should be timestamped
+            // TODO Allow user to specify stop count, time or Id
+            // TODO Allow differential archival through a cookie
+            // TODO Support GZIP-ped TAR?
+            // TODO Address potential duplication of error log entires
+
             var response = context.Response;
             response.BufferOutput = false;
             response.ContentType = "application/zip";
