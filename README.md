@@ -21,9 +21,8 @@ Eldump needs HTTP GET and HEAD permissions to the ELMAH handler URL to work.
 
 ## Server-Side
 
-Eldump is an [ASP.NET HTTP handler](http://msdn.microsoft.com/en-us/library/system.web.ihttphandler.aspx) 
-that takes all the errors in an ELMAH error log and compresses them into a 
-ZIP archive for downloading. 
+Eldump is an [ASP.NET HTTP handler][1] that takes all the errors in an ELMAH 
+error log and compresses them into a ZIP archive for downloading. 
 
 Eldump can be deployed into the `bin` folder of a running ASP.NET web 
 application and enabled via configuration, without the need for any changes 
@@ -52,9 +51,25 @@ ASP.NET application (changing the `path` as you like):
         </system.webServer>
     </location>  
 
+As an alternative to the above, Eldump can also register itself 
+automatically by simply adding the following entry to the 
+[`appSettings`][2]:
+
+    <add key="eldump:enabled" value="true" />
+
+With auto-registration, Eldump will respond to any URL with `eldump` or 
+`eldump.axd` as a path component. It will also forbid unauthenticated 
+requests. You can change these defaults by setting a delegate to 
+the `ErrorLogArchiveHandler.RequestPredicate` static property during 
+application initialization and which will determine under which request 
+conditions Eldump's handler will respond.
+
 Once deployed, a ZIP of the error log can be downloaded by simply visiting
 the configured path under the web application root. For example, if the web 
 application is hosted at `http://www.example.com/` and the handler is 
 configured to respond to the path `eldump.axd` as shown above, then the URL 
 to generate the error log archive would be 
 `http://www.example.com/eldump.axd`.
+
+[1]: http://msdn.microsoft.com/en-us/library/system.web.ihttphandler.aspx
+[2]: http://msdn.microsoft.com/en-us/library/system.configuration.configurationmanager.appsettings.aspx
