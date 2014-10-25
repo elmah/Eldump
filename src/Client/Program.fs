@@ -50,7 +50,7 @@ let parseOptions lax (names, flags) args =
     // Author: Atif Aziz, http://www.raboof.com/
     let required = 
         names |> Seq.filter (fun (name : string) -> name.Slice(-1) = "!") 
-              |> Seq.map (fun name -> name.Slice(0, new Nullable<int>(-1)))
+              |> Seq.map (fun name -> name.Slice(0, Nullable<int>(-1)))
               |> List.ofSeq
     let all = 
         names |> Seq.map (fun n -> n.TrimEnd([|'!'|]), ArgKind.Named)
@@ -64,7 +64,7 @@ let parseOptions lax (names, flags) args =
             []
         | arg :: args when arg.StartsWith("--") ->
             let name = arg.Substring(2)            
-            match all |> Seq.tryFind (fun (n, _) -> n = name) with
+            match all |> Seq.tryFind (fst >> (=) name) with
             | Some(n, ArgKind.Named) ->
                 match args with
                 | v :: args ->
@@ -108,7 +108,7 @@ module CSV =
         }
 
     let parseString text =
-        parse (new StringReader(text))
+        parse <| new StringReader(text)
 
 let mapRecords (columns : string list) records =
     // COLUMN  = required
@@ -152,11 +152,11 @@ let downloadText (url : Uri) = async {
 }
 
 let downloadErrorsIndex (url : Uri) =
-    let url = if url.IsFile then url else new Uri(url.ToString() + "/download")
+    let url = if url.IsFile then url else Uri(url.ToString() + "/download")
     let log = downloadText url |> Async.RunSynchronously
     let selector url xmlref = 
-        let url = new Uri(url |> Option.get, UriKind.Absolute)
-        let xmlref = xmlref |> Option.map (fun v -> new Uri(v, UriKind.Absolute))
+        let url = Uri(url |> Option.get, UriKind.Absolute)
+        let xmlref = xmlref |> Option.map (fun v -> Uri(v, UriKind.Absolute))
         url, xmlref
     log |> CSV.parseString 
         |> mapRecords2 "URL" "XMLREF?" selector
@@ -167,14 +167,14 @@ let resolveErrorXmlRef url xmlref = async {
     | Some(url) -> return url
     | None ->
         let! html = downloadText url
-        let doc = new HtmlDocument()
+        let doc = HtmlDocument()
         doc.LoadHtml(html)
         let node = doc.DocumentNode.QuerySelector("a[rel=alternate][type*=xml]")
         if node = null then
-            return failwith (sprintf "XML data for not found for [%s]." (url.ToString()))
+            return failwith (sprintf "XML data for not found for [%s]." <| url.ToString())
         else
-            let href = new Uri(node.Attributes.["href"].Value, UriKind.RelativeOrAbsolute)
-            return new Uri(url, href)
+            let href = Uri(node.Attributes.["href"].Value, UriKind.RelativeOrAbsolute)
+            return Uri(url, href)
 }
 
 let downloadError url xmlref = async {
@@ -196,6 +196,8 @@ module Options =
     [<Literal>] 
     let HTTP_PROXY_MY_CREDS = "http-proxy-my-creds"
 
+let (|Default|) defaultValue input = defaultArg input defaultValue
+
 let run args =
 
     let namedOptions = [Options.OUTPUT_DIR]
@@ -208,13 +210,13 @@ let run args =
 
     let verbose = not (flags.Contains Options.SILENT)
 
-    if (flags.Contains Options.TRACE) then 
+    if flags.Contains Options.TRACE then 
         Trace.Listeners.Add(new ConsoleTraceListener(true)) |> ignore
 
-    let outdir = defaultArg (nargs.TryFind Options.OUTPUT_DIR) "."
+    let outdir = nargs.TryFind Options.OUTPUT_DIR |> (|Default|) "."
     if not (Directory.Exists(outdir)) then Directory.CreateDirectory(outdir) |> ignore
 
-    if (flags.Contains Options.HTTP_PROXY_MY_CREDS) then
+    if flags.Contains Options.HTTP_PROXY_MY_CREDS then
         WebRequest.DefaultWebProxy.Credentials <- CredentialCache.DefaultCredentials
 
     match args with
@@ -222,7 +224,7 @@ let run args =
         failwith "Missing ELMAH index URL (e.g. http://www.example.com/elmah.axd)."
     | arg :: _ -> 
 
-        let homeUrl = new Uri(arg)
+        let homeUrl = Uri(arg)
         let urls = downloadErrorsIndex(homeUrl)
 
         let title = Console.Title
@@ -242,16 +244,16 @@ let run args =
 
                     let! status = async {
                         if File.Exists(path) then
-                            if verbose then Console.WriteLine((sprintf "%s SKIPPED" (url.ToString())))
+                            if verbose then Console.WriteLine((sprintf "%s SKIPPED" <| url.ToString()))
                             return tick()
                         else
                             let! url, error, xml = downloadError url xmlref
                             let status = tick()
                             if verbose then
                                 let lines = [|
-                                    sprintf "%s" (url.ToString());
-                                    sprintf "%s: %s" status (error.Type);
-                                    sprintf "%s\n" (error.Message);
+                                    sprintf "%s"     <| url.ToString();
+                                    sprintf "%s: %s" status <| error.Type;
+                                    sprintf "%s\n"   <| error.Message;
                                 |]
                                 Console.WriteLine(String.Join(Environment.NewLine, lines))
                             File.WriteAllText(path, xml)
@@ -273,6 +275,6 @@ let main args =
         0
     with
     | e -> 
-        eprintfn "%s" (e.GetBaseException().Message)
+        eprintfn "%s" <| e.GetBaseException().Message
         Trace.TraceError(e.ToString())
         1
