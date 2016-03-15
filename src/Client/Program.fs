@@ -70,12 +70,12 @@ let parseOptions lax (names, flags) args =
                 | v :: args ->
                     Named(n, v) :: parse args
                 | [] ->
-                    failwith (sprintf "Missing argument value: %s" name)
+                    failwith <| sprintf "Missing argument value: %s" name
             | Some(n, ArgKind.Flag) ->
                 Flag(n) :: parse args
             | None ->
                 if not lax then
-                    failwith (sprintf "Unknown argument: %s" name)
+                    failwith <| sprintf "Unknown argument: %s" name
                 else
                     Atom(arg) :: parse args
         | arg :: args ->
@@ -86,7 +86,7 @@ let parseOptions lax (names, flags) args =
         args |> Seq.choose (function | Flag(n)     -> Some(n)    | _ -> None) |> Set.ofSeq, 
         args |> Seq.choose (function | Atom(a)     -> Some(a)    | _ -> None) |> List.ofSeq
     match required |> Seq.tryFind (fun arg -> not (nargs.ContainsKey(arg))) with
-    | Some(arg) -> failwith (sprintf "Missing required argument: %s" arg)
+    | Some(arg) -> failwith <| sprintf "Missing required argument: %s" arg
     | None -> nargs, fargs, args
 
 let laxParseOptions = 
@@ -123,7 +123,7 @@ let mapRecords (columns : string list) records =
     let records = records |> Seq.cache
     seq {
         let fields = records |> Seq.head
-        let bindings = [0..((fields |> Seq.length) - 1)]
+        let bindings = [0..(fields |> Seq.length) - 1]
         let bindings =
             match columns with
             | [] -> 
@@ -225,7 +225,7 @@ let run args =
     | arg :: _ -> 
 
         let homeUrl = Uri(arg)
-        let urls = downloadErrorsIndex(homeUrl)
+        let urls = downloadErrorsIndex homeUrl
 
         let title = Console.Title
         try
@@ -244,7 +244,7 @@ let run args =
 
                     let! status = async {
                         if File.Exists(path) then
-                            if verbose then Console.WriteLine((sprintf "%s SKIPPED" <| url.ToString()))
+                            if verbose then Console.WriteLine(sprintf "%s SKIPPED" <| url.ToString())
                             return tick()
                         else
                             let! url, error, xml = downloadError url xmlref
