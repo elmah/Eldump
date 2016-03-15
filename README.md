@@ -1,3 +1,5 @@
+# Eldump
+
 Eldump is a client-side and ASP.NET solution for downloading all errors 
 logged at a web site using ELMAH.
 
