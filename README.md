@@ -31,33 +31,38 @@ application and enabled via configuration, without the need for any changes
 to the application code. Just add the following to the `web.config` of the 
 ASP.NET application (changing the `path` as you like):
 
-    <location path="eldump.axd">  
-        <system.web>
-            <httpHandlers>
-                <add verb="GET,HEAD" 
-                     path="eldump.axd" 
-                     type="Eldump.AspNet.ErrorLogArchiveHandler, Eldump.AspNet" />
-            </httpHandlers>
-            <authorization>
-                <deny users="*" />  
-            </authorization>  
-        </system.web>
-        <system.webServer>
-            <handlers>
-                <add name="ELMAH" 
-                     verb="GET,HEAD"
-                     path="eldump.axd" 
-                     type="Eldump.AspNet.ErrorLogArchiveHandler, Eldump.AspNet"
-                     preCondition="integratedMode" />
-            </handlers>
-        </system.webServer>
-    </location>  
+```xml
+<location path="eldump.axd">  
+    <system.web>
+        <httpHandlers>
+            <add verb="GET,HEAD" 
+                 path="eldump.axd" 
+                 type="Eldump.AspNet.ErrorLogArchiveHandler, Eldump.AspNet" />
+        </httpHandlers>
+        <authorization>
+            <deny users="*" />  
+        </authorization>  
+    </system.web>
+    <system.webServer>
+        <handlers>
+            <add name="ELMAH" 
+                 verb="GET,HEAD"
+                 path="eldump.axd" 
+                 type="Eldump.AspNet.ErrorLogArchiveHandler, Eldump.AspNet"
+                 preCondition="integratedMode" />
+        </handlers>
+    </system.webServer>
+</location>  
+```
+
 
 As an alternative to the above, Eldump can also register itself 
 automatically by simply adding the following entry to the 
 [`appSettings`][2]:
 
-    <add key="eldump:enabled" value="true" />
+```xml
+<add key="eldump:enabled" value="true" />
+```
 
 With auto-registration, Eldump will respond to any URL with `eldump` or 
 `eldump.axd` as a path component. It will also forbid unauthenticated 
